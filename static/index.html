@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScreenAI — AI-Based Resume Screening & Talent Intelligence System</title>
+  <meta name="description" content="Production-grade AI Agent for automated resume screening, semantic skill matching, and tailored interview generation.">
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="dark-theme">
+  <!-- Glow Backdrop -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+  <div class="glow-orb orb-3"></div>
+
+  <!-- App Wrapper -->
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-brain-circuit"></i>
+        </div>
+        <div class="brand-text">
+          <h2>Screen<span>AI</span></h2>
+          <span class="badge-sub">Talent Intelligence</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="studio" id="nav-studio">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Screening Studio</span>
+        </button>
+        <button class="nav-item" data-tab="candidates" id="nav-candidates">
+          <i class="fa-solid fa-users-viewfinder"></i>
+          <span>Talent Pool</span>
+          <span class="counter-badge" id="sidebar-candidate-count">0</span>
+        </button>
+        <button class="nav-item" data-tab="jobs" id="nav-jobs">
+          <i class="fa-solid fa-briefcase"></i>
+          <span>Job Openings</span>
+          <span class="counter-badge" id="sidebar-job-count">3</span>
+        </button>
+        <button class="nav-item" data-tab="analytics" id="nav-analytics">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Analytics</span>
+        </button>
+        <button class="nav-item" data-tab="settings" id="nav-settings">
+          <i class="fa-solid fa-sliders"></i>
+          <span>AI Engine Config</span>
+        </button>
+      </nav>
+
+      <!-- Agent Status Card -->
+      <div class="agent-status-card">
+        <div class="status-indicator">
+          <span class="pulse-dot"></span>
+          <span class="status-title" id="status-engine-name">Local NLP Agent</span>
+        </div>
+        <p class="status-sub" id="status-engine-desc">High-Precision Semantic Parser</p>
+        <button class="btn-xs btn-outline" onclick="switchTab('settings')">
+          <i class="fa-solid fa-gear"></i> Configure
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="page-title">
+          <h1 id="page-heading">AI Screening Studio</h1>
+          <p id="page-subheading">Evaluate candidate resumes against role requirements in real time</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary" onclick="exportCandidatesCSV()">
+            <i class="fa-solid fa-file-export"></i> Export CSV
+          </button>
+          <button class="btn btn-primary" onclick="openNewJobModal()">
+            <i class="fa-solid fa-plus"></i> Post New Job
+          </button>
+        </div>
+      </header>
+
+      <!-- View Containers -->
+
+      <!-- 1. SCREENING STUDIO TAB -->
+      <section id="tab-studio" class="tab-view active">
+        <div class="studio-grid">
+          <!-- Left Column: Input Form -->
+          <div class="card glass-panel form-card">
+            <div class="card-header">
+              <div class="step-badge">1</div>
+              <div>
+                <h3>Target Position & Resume Input</h3>
+                <p>Select role benchmark and upload or paste applicant resume</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="studio-job-select">Select Job Opening <span class="required">*</span></label>
+              <div class="select-wrapper">
+                <select id="studio-job-select" onchange="onJobSelectionChange()">
+                  <!-- Dynamically populated -->
+                </select>
+                <i class="fa-solid fa-chevron-down select-arrow"></i>
+              </div>
+            </div>
+
+            <!-- Job Quick Specs Card -->
+            <div class="job-preview-box" id="job-preview-box">
+              <div class="preview-header">
+                <span class="preview-dept" id="preview-dept">Engineering</span>
+                <span class="preview-exp" id="preview-exp"><i class="fa-solid fa-clock"></i> 5+ yrs</span>
+              </div>
+              <div class="preview-skills" id="preview-skills">
+                <!-- Skill badges -->
+              </div>
+            </div>
+
+            <!-- Input Tabs: File Upload vs Text Paste -->
+            <div class="input-mode-tabs">
+              <button class="mode-btn active" id="mode-file-btn" onclick="setInputMode('file')">
+                <i class="fa-solid fa-file-arrow-up"></i> Upload PDF / TXT
+              </button>
+              <button class="mode-btn" id="mode-text-btn" onclick="setInputMode('text')">
+                <i class="fa-solid fa-align-left"></i> Paste Text
+              </button>
+            </div>
+
+            <!-- File Upload Zone -->
+            <div id="upload-zone-wrapper" class="mode-content active">
+              <div class="drop-zone" id="drop-zone">
+                <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+                <h4>Drag & drop resume file here</h4>
+                <p>Supports PDF, TXT or DOC text formats (Max 15MB)</p>
+                <label class="btn btn-secondary btn-sm file-btn">
+                  <span>Browse File</span>
+                  <input type="file" id="resume-file-input" accept=".pdf,.txt,.md" style="display:none;" onchange="handleFileSelected(event)">
+                </label>
+                <div id="selected-file-name" class="selected-file-info hidden">
+                  <i class="fa-solid fa-file-pdf"></i>
+                  <span id="file-name-text">filename.pdf</span>
+                  <button type="button" class="btn-clear" onclick="clearSelectedFile()">&times;</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Paste Text Zone -->
+            <div id="paste-zone-wrapper" class="mode-content">
+              <div class="form-group">
+                <div class="paste-header">
+                  <label for="resume-text-input">Applicant Resume Text</label>
+                  <div class="sample-picker">
+                    <span>Load Demo:</span>
+                    <button type="button" class="sample-link" onclick="loadSampleResume('ai_lead')">AI Lead</button>
+                    <button type="button" class="sample-link" onclick="loadSampleResume('fullstack')">FullStack</button>
+                    <button type="button" class="sample-link" onclick="loadSampleResume('junior')">Junior</button>
+                  </div>
+                </div>
+                <textarea id="resume-text-input" rows="8" placeholder="Paste resume plain text here, including experience, skills, and education..."></textarea>
+              </div>
+            </div>
+
+            <!-- Optional Candidate Info -->
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="input-cand-name">Candidate Name (Optional)</label>
+                <input type="text" id="input-cand-name" placeholder="Auto-detected if left blank">
+              </div>
+              <div class="form-group flex-1">
+                <label for="input-cand-email">Email (Optional)</label>
+                <input type="email" id="input-cand-email" placeholder="Auto-detected from resume">
+              </div>
+            </div>
+
+            <!-- Submit Action -->
+            <button class="btn btn-primary btn-block btn-lg" id="btn-run-screening" onclick="submitScreening()">
+              <i class="fa-solid fa-bolt-lightning"></i>
+              <span>Run AI Screening Evaluation</span>
+            </button>
+          </div>
+
+          <!-- Right Column: Live Result Showcase -->
+          <div class="card glass-panel result-card">
+            <div class="card-header">
+              <div class="step-badge">2</div>
+              <div>
+                <h3>AI Evaluation Dossier</h3>
+                <p>Automated match scores, skill gap breakdown, and tailored questions</p>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="result-empty-state" class="empty-state">
+              <div class="empty-illustration">
+                <i class="fa-solid fa-microchip-ai"></i>
+              </div>
+              <h4>No Resume Screened Yet</h4>
+              <p>Select a job role, upload or paste a resume, then click "Run AI Screening Evaluation" to inspect candidate fit.</p>
+              <button class="btn btn-outline btn-sm" onclick="loadSampleResume('ai_lead'); submitScreening();">
+                <i class="fa-solid fa-play"></i> Try Sample AI Engineer Candidate
+              </button>
+            </div>
+
+            <!-- Loading Spinner State -->
+            <div id="result-loading-state" class="loading-state hidden">
+              <div class="scanner-laser"></div>
+              <div class="spinner-core"></div>
+              <h4>AI Agent Analyzing Resume...</h4>
+              <p class="loading-step-text" id="loading-step-text">Parsing candidate skills and historical tenure...</p>
+            </div>
+
+            <!-- Screened Result View -->
+            <div id="result-active-view" class="result-details hidden">
+              <!-- Score Header -->
+              <div class="score-hero">
+                <div class="gauge-wrapper">
+                  <svg class="progress-ring" width="130" height="130">
+                    <circle class="progress-ring-bg" stroke="#1f293d" stroke-width="10" fill="transparent" r="54" cx="65" cy="65"/>
+                    <circle id="score-circle-bar" class="progress-ring-circle" stroke="#10b981" stroke-width="10" stroke-linecap="round" fill="transparent" r="54" cx="65" cy="65"/>
+                  </svg>
+                  <div class="gauge-center">
+                    <span class="gauge-number" id="res-overall-score">88</span>
+                    <span class="gauge-unit">%</span>
+                  </div>
+                </div>
+
+                <div class="verdict-wrapper">
+                  <div class="badge-verdict" id="res-recommendation-badge">Strong Match</div>
+                  <h3 id="res-candidate-name">Dr. Alex Sterling</h3>
+                  <p class="cand-meta">
+                    <span id="res-email"><i class="fa-solid fa-envelope"></i> alex@example.com</span>
+                    <span id="res-exp"><i class="fa-solid fa-briefcase"></i> 6.0 yrs exp</span>
+                  </p>
+                  <p class="cand-edu" id="res-education"><i class="fa-solid fa-graduation-cap"></i> Ph.D in Computer Science</p>
+                </div>
+              </div>
+
+              <!-- Sub-Score Breakdown Bars -->
+              <div class="score-breakdown-grid">
+                <div class="sub-score-item">
+                  <div class="sub-score-header">
+                    <span>Skills Match (40%)</span>
+                    <strong id="bar-skills-val">90%</strong>
+                  </div>
+                  <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="bar-skills-fill" style="width: 90%;"></div>
+                  </div>
+                </div>
+
+                <div class="sub-score-item">
+                  <div class="sub-score-header">
+                    <span>Experience Fit (30%)</span>
+                    <strong id="bar-exp-val">85%</strong>
+                  </div>
+                  <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="bar-exp-fill" style="width: 85%;"></div>
+                  </div>
+                </div>
+
+                <div class="sub-score-item">
+                  <div class="sub-score-header">
+                    <span>Education (15%)</span>
+                    <strong id="bar-edu-val">95%</strong>
+                  </div>
+                  <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="bar-edu-fill" style="width: 95%;"></div>
+                  </div>
+                </div>
+
+                <div class="sub-score-item">
+                  <div class="sub-score-header">
+                    <span>Semantic Relevance (15%)</span>
+                    <strong id="bar-relevance-val">82%</strong>
+                  </div>
+                  <div class="progress-bar-track">
+                    <div class="progress-bar-fill" id="bar-relevance-fill" style="width: 82%;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- AI Executive Summary -->
+              <div class="analysis-box">
+                <h4><i class="fa-solid fa-sparkles"></i> AI Recruiter Summary</h4>
+                <p id="res-ai-summary">Candidate demonstrates comprehensive coverage of core technical stack.</p>
+              </div>
+
+              <!-- Skills Matched vs Missing Grid -->
+              <div class="skills-match-section">
+                <div class="matched-box">
+                  <span class="box-tag match"><i class="fa-solid fa-circle-check"></i> Matched Competencies</span>
+                  <div class="tag-cloud" id="res-matched-skills">
+                    <!-- Matched skills pills -->
+                  </div>
+                </div>
+
+                <div class="missing-box">
+                  <span class="box-tag gap"><i class="fa-solid fa-circle-exclamation"></i> Missing / Unverified Skills</span>
+                  <div class="tag-cloud" id="res-missing-skills">
+                    <!-- Missing skills pills -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Strengths & Weaknesses Cards -->
+              <div class="pros-cons-grid">
+                <div class="pros-card">
+                  <h5><i class="fa-solid fa-arrow-trend-up"></i> Key Strengths</h5>
+                  <ul id="res-strengths-list"></ul>
+                </div>
+                <div class="cons-card">
+                  <h5><i class="fa-solid fa-triangle-exclamation"></i> Potential Skill Gaps</h5>
+                  <ul id="res-weaknesses-list"></ul>
+                </div>
+              </div>
+
+              <!-- Tailored Interview Questions -->
+              <div class="interview-prep-section">
+                <h4><i class="fa-solid fa-comments-question-check"></i> AI-Generated Interview Questions</h4>
+                <p class="section-desc">Targeted inquiries designed to probe verified strengths and uncover potential gaps</p>
+                <div class="questions-list" id="res-questions-container">
+                  <!-- Dynamic questions -->
+                </div>
+              </div>
+
+              <!-- Bottom Action Bar -->
+              <div class="result-action-bar">
+                <div class="status-selector-wrap">
+                  <label>Change Pipeline Status:</label>
+                  <select id="res-change-status-select" onchange="updateCurrentCandidateStatus()">
+                    <option value="Shortlisted">Shortlisted</option>
+                    <option value="Interview Scheduled">Interview Scheduled</option>
+                    <option value="Under Review">Under Review</option>
+                    <option value="Rejected">Rejected</option>
+                  </select>
+                </div>
+                <button class="btn btn-outline" onclick="switchTab('candidates')">
+                  <i class="fa-solid fa-arrow-right"></i> View in Talent Pool
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. CANDIDATES / TALENT POOL TAB -->
+      <section id="tab-candidates" class="tab-view">
+        <div class="card glass-panel">
+          <!-- Filters & Search Toolbar -->
+          <div class="toolbar">
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="cand-search-input" placeholder="Search by candidate name, email, or skill..." oninput="debounceFilterCandidates()">
+            </div>
+
+            <div class="toolbar-filters">
+              <div class="filter-group">
+                <label>Job:</label>
+                <select id="cand-filter-job" onchange="loadCandidates()">
+                  <option value="">All Job Roles</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label>Status:</label>
+                <select id="cand-filter-status" onchange="loadCandidates()">
+                  <option value="All">All Statuses</option>
+                  <option value="Shortlisted">Shortlisted</option>
+                  <option value="Interview Scheduled">Interview Scheduled</option>
+                  <option value="Under Review">Under Review</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+
+              <button class="btn btn-secondary" onclick="exportCandidatesCSV()">
+                <i class="fa-solid fa-download"></i> CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- Candidates Table -->
+          <div class="table-responsive">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Candidate</th>
+                  <th>Applied Role</th>
+                  <th>Match Score</th>
+                  <th>Recommendation</th>
+                  <th>Status</th>
+                  <th>Screened On</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="candidates-table-body">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty Table Message -->
+          <div id="candidates-empty-msg" class="empty-state hidden">
+            <i class="fa-solid fa-folder-open empty-icon"></i>
+            <h4>No Candidates Found</h4>
+            <p>Try adjusting your search query or screen a new resume in the Screening Studio.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. JOB OPENINGS TAB -->
+      <section id="tab-jobs" class="tab-view">
+        <div class="jobs-view-header">
+          <div>
+            <h3>Active Role Benchmarks</h3>
+            <p>Manage job profiles and skill criteria used by the AI Screening Agent</p>
+          </div>
+          <button class="btn btn-primary" onclick="openNewJobModal()">
+            <i class="fa-solid fa-plus"></i> Create Role Profile
+          </button>
+        </div>
+
+        <div class="jobs-grid" id="jobs-cards-grid">
+          <!-- Dynamically populated job cards -->
+        </div>
+      </section>
+
+      <!-- 4. ANALYTICS TAB -->
+      <section id="tab-analytics" class="tab-view">
+        <!-- Metric Counters Row -->
+        <div class="metrics-row">
+          <div class="metric-card">
+            <div class="metric-icon blue"><i class="fa-solid fa-file-invoice"></i></div>
+            <div class="metric-info">
+              <span class="metric-label">Total Screened</span>
+              <h2 id="metric-total-screened">0</h2>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon emerald"><i class="fa-solid fa-badge-check"></i></div>
+            <div class="metric-info">
+              <span class="metric-label">Shortlisted</span>
+              <h2 id="metric-shortlisted">0</h2>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon purple"><i class="fa-solid fa-calendar-check"></i></div>
+            <div class="metric-info">
+              <span class="metric-label">Interviews Set</span>
+              <h2 id="metric-interviews">0</h2>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon amber"><i class="fa-solid fa-chart-line-up"></i></div>
+            <div class="metric-info">
+              <span class="metric-label">Avg Match Score</span>
+              <h2 id="metric-avg-score">0%</h2>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skill Insights Grid -->
+        <div class="analytics-charts-grid">
+          <div class="card glass-panel">
+            <div class="card-header">
+              <i class="fa-solid fa-circle-check text-emerald"></i>
+              <div>
+                <h4>Top In-Demand Matched Skills</h4>
+                <p>Most frequently verified technical competencies across applicant pool</p>
+              </div>
+            </div>
+            <div class="skills-stat-list" id="stat-matched-skills-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <div class="card glass-panel">
+            <div class="card-header">
+              <i class="fa-solid fa-triangle-exclamation text-amber"></i>
+              <div>
+                <h4>Most Common Technical Skill Gaps</h4>
+                <p>Required skills most frequently missing in submitted resumes</p>
+              </div>
+            </div>
+            <div class="skills-stat-list" id="stat-missing-skills-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. SETTINGS TAB -->
+      <section id="tab-settings" class="tab-view">
+        <div class="card glass-panel settings-card">
+          <div class="card-header">
+            <i class="fa-solid fa-microchip-ai text-indigo"></i>
+            <div>
+              <h3>AI Engine Configuration</h3>
+              <p>Configure screening intelligence modes and Google Gemini LLM API keys</p>
+            </div>
+          </div>
+
+          <div class="engine-options-grid">
+            <div class="engine-box" id="engine-card-local" onclick="selectEngineMode('local')" style="cursor:pointer;">
+              <div class="engine-badge" id="engine-badge-local">Click to Activate</div>
+              <div class="engine-icon"><i class="fa-solid fa-bolt"></i></div>
+              <h4>Local High-Precision NLP Screener</h4>
+              <p>Fast, deterministic, and 100% offline. Parses skills, evaluates tenure, detects degrees, and generates rubric questions without any API latency.</p>
+              <span class="pill pill-green"><i class="fa-solid fa-check"></i> Always Available</span>
+            </div>
+
+            <div class="engine-box" id="engine-card-gemini" onclick="selectEngineMode('gemini')" style="cursor:pointer;">
+              <div class="engine-badge" id="engine-badge-gemini">Click to Activate</div>
+              <div class="engine-icon"><i class="fa-solid fa-sparkles"></i></div>
+              <h4>Google Gemini 2.5 Flash LLM</h4>
+              <p>Performs deep qualitative candidate persona synthesis, nuanced context-aware reasoning, and tailored technical interview questions.</p>
+              <span class="pill pill-blue"><i class="fa-solid fa-cloud"></i> Optional API Key</span>
+            </div>
+          </div>
+
+          <div class="form-group config-input-group">
+            <label for="settings-gemini-key">Google Gemini API Key (Optional)</label>
+            <div class="input-with-action">
+              <input type="password" id="settings-gemini-key" placeholder="AIzaSy...">
+              <button class="btn btn-secondary" onclick="saveGeminiApiKey()">
+                <i class="fa-solid fa-floppy-disk"></i> Save Key
+              </button>
+              <button class="btn btn-secondary" id="btn-clear-key" onclick="clearGeminiApiKey()" style="display:none;">
+                <i class="fa-solid fa-trash"></i> Clear Key
+              </button>
+            </div>
+            <small class="helper-text">
+              If left blank, ScreenAI seamlessly runs using the built-in deterministic Python NLP agent. You can get a free key from <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a>.
+            </small>
+          </div>
+
+          <div class="database-info-box">
+            <h4><i class="fa-solid fa-database"></i> Database Information</h4>
+            <p>SQLite Database is active and running locally at <code>resume_screener.db</code> with persistent ACID storage for candidates, jobs, evaluations, and audit logs.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- CANDIDATE FULL DOSSIER MODAL -->
+  <div class="modal-overlay hidden" id="dossier-modal">
+    <div class="modal-dialog glass-panel">
+      <div class="modal-header">
+        <div>
+          <span class="modal-pretitle">Candidate Evaluation Dossier</span>
+          <h2 id="modal-cand-name">Candidate Name</h2>
+          <p id="modal-cand-meta">alex@example.com • 5.5 yrs exp</p>
+        </div>
+        <button class="btn-close" onclick="closeDossierModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Sub-score grid -->
+        <div class="modal-score-banner">
+          <div class="modal-score-metric">
+            <span>Overall Score</span>
+            <h2 id="modal-score-overall">0%</h2>
+          </div>
+          <div class="modal-score-metric">
+            <span>Skills Match</span>
+            <h3 id="modal-score-skills">0%</h3>
+          </div>
+          <div class="modal-score-metric">
+            <span>Experience</span>
+            <h3 id="modal-score-exp">0%</h3>
+          </div>
+          <div class="modal-score-metric">
+            <span>Relevance</span>
+            <h3 id="modal-score-relevance">0%</h3>
+          </div>
+        </div>
+
+        <div class="modal-section">
+          <h4>AI Recruiter Summary</h4>
+          <p id="modal-summary-text"></p>
+        </div>
+
+        <div class="modal-section">
+          <h4>Matched Technical Skills</h4>
+          <div class="tag-cloud" id="modal-matched-skills"></div>
+        </div>
+
+        <div class="modal-section">
+          <h4>Missing / Unverified Skills</h4>
+          <div class="tag-cloud" id="modal-missing-skills"></div>
+        </div>
+
+        <div class="modal-section">
+          <h4>Interview Questions & Rubric</h4>
+          <div class="questions-list" id="modal-interview-questions"></div>
+        </div>
+
+        <div class="modal-section">
+          <h4>Recruiter Status & Notes</h4>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>Update Status:</label>
+              <select id="modal-status-select">
+                <option value="Shortlisted">Shortlisted</option>
+                <option value="Interview Scheduled">Interview Scheduled</option>
+                <option value="Under Review">Under Review</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+            <div class="form-group flex-2">
+              <label>Recruiter Notes:</label>
+              <input type="text" id="modal-notes-input" placeholder="Add feedback or interview availability...">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeDossierModal()">Close</button>
+        <button class="btn btn-primary" onclick="saveModalCandidateStatus()">Save Status Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW JOB MODAL -->
+  <div class="modal-overlay hidden" id="job-modal">
+    <div class="modal-dialog glass-panel">
+      <div class="modal-header">
+        <div>
+          <h2>Create New Job Benchmark</h2>
+          <p>Define requirements for automated AI candidate screening</p>
+        </div>
+        <button class="btn-close" onclick="closeNewJobModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Job Title <span class="required">*</span></label>
+          <input type="text" id="new-job-title" placeholder="e.g. Senior Backend Engineer (Python / Go)">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>Department <span class="required">*</span></label>
+            <input type="text" id="new-job-dept" placeholder="Engineering, AI, Product">
+          </div>
+          <div class="form-group flex-1">
+            <label>Min Experience (Years) <span class="required">*</span></label>
+            <input type="number" id="new-job-exp" value="3" min="0" max="25">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Required Skills (Comma separated) <span class="required">*</span></label>
+          <input type="text" id="new-job-req-skills" placeholder="Python, FastAPI, PostgreSQL, Docker, Git">
+        </div>
+
+        <div class="form-group">
+          <label>Preferred / Bonus Skills (Comma separated)</label>
+          <input type="text" id="new-job-pref-skills" placeholder="Kubernetes, Redis, AWS, Microservices">
+        </div>
+
+        <div class="form-group">
+          <label>Job Description <span class="required">*</span></label>
+          <textarea id="new-job-desc" rows="4" placeholder="Detail the core responsibilities, day-to-day workflow, and team expectations..."></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeNewJobModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitNewJob()">Create Benchmark</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
